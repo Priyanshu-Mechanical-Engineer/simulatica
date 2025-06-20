@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+
 
 export default function PaymentPage() {
   const [userEmail, setUserEmail] = useState('');
@@ -83,7 +85,14 @@ const handleUpload = async () => {
       <div className="mb-4 border p-4 rounded bg-gray-50">
         <p><strong>UPI ID:</strong> <code className="text-blue-600">simulatica@upi</code></p>
         <p><strong>Amount:</strong> ₹499 (example)</p>
-        <img src="/qr-code.png" alt="QR Code" className="w-40 h-40 mt-2" />
+        <Image
+            src="/qr-code.png"
+            alt="UPI QR"
+            width={300}
+            height={300}
+            className="rounded"
+        />
+
       </div>
 
       <input

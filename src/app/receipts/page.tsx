@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
-import LogoutButton from '@/components/LogoutButton';
+// import LogoutButton from '@/components/LogoutButton';
 
 const PAYMENTS_URL = 'https://script.google.com/macros/s/AKfycbx4tZX7moFmH_zVDVFm3xxaZUIZA2KzeEuvuabbSmmIdwvVRnu4mzS_smjV-4SD1uly6Q/exec?function=getPayments';
 
@@ -37,8 +37,8 @@ export default function UserReceiptsPage() {
           );
           setPayments(userPayments.reverse());
         }
-      } catch (error) {
-        alert('Failed to fetch payments.');
+      // } catch {
+      //   alert('Failed to fetch payments.');
       } finally {
         setLoading(false);
       }

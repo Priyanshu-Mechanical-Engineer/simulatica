@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
-import LogoutButton from '../../components/LogoutButton';
+// import LogoutButton from '../../components/LogoutButton';
 
 const ADMIN_EMAIL = '2022meb1331@iitrpr.ac.in';
 const FORM_URL = 'https://script.google.com/macros/s/AKfycbx4tZX7moFmH_zVDVFm3xxaZUIZA2KzeEuvuabbSmmIdwvVRnu4mzS_smjV-4SD1uly6Q/exec';

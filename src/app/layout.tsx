@@ -2,13 +2,8 @@ import "./globals.css";
 import { Inter } from "next/font/google";
 import { AuthProvider } from "@/context/AuthContext";
 import Navbar from "@/components/Navbar"; // ✅ Import the Navbar
-import { Orbitron } from 'next/font/google';
+// import { Orbitron } from 'next/font/google';
 
-const orbitron = Orbitron({
-  subsets: ['latin'],
-  weight: ['500', '700', '900'],
-  variable: '--font-orbitron',
-});
 
 const inter = Inter({ subsets: ["latin"] });
 

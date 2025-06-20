@@ -34,7 +34,7 @@ export default function AdminReceiptsPage() {
         if (result.result === 'Success') {
           setPayments(result.data.reverse());
         }
-      } catch (error) {
+      } catch {
         alert('Failed to fetch payments.');
       } finally {
         setLoading(false);
