@@ -3,7 +3,7 @@ import { Inter } from "next/font/google";
 import { AuthProvider } from "@/context/AuthContext";
 import Navbar from "@/components/Navbar"; // ✅ Import the Navbar
 // import { Orbitron } from 'next/font/google';
-
+import { Analytics } from "@vercel/analytics/next"
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -23,6 +23,7 @@ export default function RootLayout({
         <AuthProvider>
           <Navbar /> {/* ✅ Add Navbar here */}
           <main className="pt-4">{children}</main>
+          <Analytics />
         </AuthProvider>
       </body>
     </html>
