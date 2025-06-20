@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { auth } from '@/lib/firebase';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, User } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 
 const ADMIN_EMAIL = '2022meb1331@iitrpr.ac.in';
@@ -22,7 +22,7 @@ export default function AdminReceiptsPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user: User | null) => {
       if (!user) return router.push('/login');
       const email = user.email ?? '';
       if (email !== ADMIN_EMAIL) return router.push('/');
@@ -34,7 +34,7 @@ export default function AdminReceiptsPage() {
         if (result.result === 'Success') {
           setPayments(result.data.reverse());
         }
-      } catch (error: unknown) {
+      } catch (error) {
         alert('Failed to fetch payments.');
       } finally {
         setLoading(false);
@@ -42,7 +42,7 @@ export default function AdminReceiptsPage() {
     });
 
     return () => unsubscribe();
-  }, [router, auth]);
+  }, [router]);
 
   if (loading) return <div className="p-6">Loading receipts...</div>;
 

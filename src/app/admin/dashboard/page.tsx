@@ -1,13 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 
 const ADMIN_EMAIL = '2022meb1331@iitrpr.ac.in';
 const FORM_URL = 'https://script.google.com/macros/s/AKfycbx4tZX7moFmH_zVDVFm3xxaZUIZA2KzeEuvuabbSmmIdwvVRnu4mzS_smjV-4SD1uly6Q/exec';
-const PAYMENT_URL = FORM_URL + '?function=payments';
+const PAYMENT_URL = `${FORM_URL}?function=payments`;
 
 interface Submission {
   timestamp: string;
@@ -34,8 +34,11 @@ export default function AdminDashboard() {
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (!user) return router.push('/login');
+    const unsubscribe = onAuthStateChanged(auth, async (user: User | null) => {
+      if (!user) {
+        router.push('/login');
+        return;
+      }
       if (user.email !== ADMIN_EMAIL) {
         alert('Access denied. Not admin.');
         router.push('/');
@@ -47,7 +50,7 @@ export default function AdminDashboard() {
       try {
         const [formRes, payRes] = await Promise.all([
           fetch(FORM_URL),
-          fetch(PAYMENT_URL),
+          fetch(PAYMENT_URL)
         ]);
 
         const formData = await formRes.json();
@@ -59,7 +62,7 @@ export default function AdminDashboard() {
         } else {
           alert('❌ Failed to fetch data');
         }
-      } catch (error: unknown) {
+      } catch (error) {
         console.error('Fetch error:', error);
         alert('❌ Network or script error.');
       } finally {
@@ -68,41 +71,31 @@ export default function AdminDashboard() {
     });
 
     return () => unsubscribe();
-  }, [router, auth]);
+  }, [router]);
 
   const handleStatusChange = async (row: number, newStatus: string) => {
     try {
-      const response = await fetch(
-        `${FORM_URL}?function=update&row=${row}&status=${encodeURIComponent(newStatus)}`
-      );
+      const response = await fetch(`${FORM_URL}?function=update&row=${row}&status=${encodeURIComponent(newStatus)}`);
       const result = await response.json();
       if (result.result === 'Success') {
-        setSubmissions((prev) =>
-          prev.map((s) => (s._row === row ? { ...s, status: newStatus } : s))
-        );
+        setSubmissions(prev => prev.map(s => (s._row === row ? { ...s, status: newStatus } : s)));
         alert('✅ Status updated in sheet.');
       } else {
         alert('❌ Update failed: ' + result.message);
       }
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Update error:', error);
       alert('❌ Network or script error.');
     }
   };
 
   const getReceiptLink = (email: string) => {
-    const match = payments.find(
-      (p) => p.email?.toLowerCase() === email?.toLowerCase()
-    );
+    const match = payments.find(p => p.email?.toLowerCase() === email?.toLowerCase());
     return match?.receipturl || null;
   };
 
   const getPaymentStatus = (email: string) => {
-    return payments.some(
-      (p) => p.email?.toLowerCase() === email?.toLowerCase()
-    )
-      ? 'Paid'
-      : 'Unpaid';
+    return payments.some(p => p.email?.toLowerCase() === email?.toLowerCase()) ? 'Paid' : 'Unpaid';
   };
 
   if (loading) return <div className="p-6">Loading admin dashboard...</div>;
@@ -112,9 +105,7 @@ export default function AdminDashboard() {
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">🛠️ Admin Dashboard</h1>
       </div>
-      <p className="mb-4">
-        Welcome, <strong>{userEmail}</strong>
-      </p>
+      <p className="mb-4">Welcome, <strong>{userEmail}</strong></p>
 
       {submissions.length === 0 ? (
         <p>No project submissions yet.</p>
@@ -141,11 +132,7 @@ export default function AdminDashboard() {
                 <td className="p-2">{s.description}</td>
                 <td className="p-2">
                   <a
-                    href={
-                      s.fileurl?.includes('/view')
-                        ? s.fileurl.replace('/view?usp=drivesdk', '?export=download')
-                        : s.fileurl
-                    }
+                    href={s.fileurl?.includes('/view') ? s.fileurl.replace('/view?usp=drivesdk', '?export=download') : s.fileurl}
                     className="text-blue-600 underline"
                     target="_blank"
                     rel="noopener noreferrer"
@@ -172,9 +159,7 @@ export default function AdminDashboard() {
                   <select
                     className="border p-1 rounded"
                     value={s.status || 'Under Review'}
-                    onChange={(e) =>
-                      handleStatusChange(s._row, e.target.value)
-                    }
+                    onChange={(e) => handleStatusChange(s._row, e.target.value)}
                   >
                     <option>Pending</option>
                     <option>Under Review</option>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 
@@ -25,7 +25,7 @@ export default function UserDashboard() {
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user: User | null) => {
       if (!user) {
         router.push('/login');
         return;
@@ -41,13 +41,15 @@ export default function UserDashboard() {
         if (result.result === 'Success') {
           const userSubs = result.data
             .reverse()
-            .filter((entry) => (entry.email || '').toLowerCase().trim() === email);
+            .filter((entry) =>
+              (entry.email || '').toLowerCase().trim() === email
+            );
 
           setSubmissions(userSubs);
         } else {
           alert('❌ Failed to fetch your projects');
         }
-      } catch (error: unknown) {
+      } catch (error) {
         console.error('Failed to load submissions:', (error as Error).message);
         alert('❌ Failed to load your dashboard');
       } finally {
@@ -56,7 +58,7 @@ export default function UserDashboard() {
     });
 
     return () => unsubscribe();
-  }, [router, auth]);
+  }, [router]);
 
   if (loading) return <div className="p-6">Loading your dashboard...</div>;
 
@@ -66,7 +68,9 @@ export default function UserDashboard() {
         <h1 className="text-2xl font-bold">📋 My Submissions</h1>
       </div>
 
-      <p className="mb-4">Logged in as <strong>{userEmail}</strong></p>
+      <p className="mb-4">
+        Logged in as <strong>{userEmail}</strong>
+      </p>
 
       {submissions.length === 0 ? (
         <p>No submissions yet.</p>
