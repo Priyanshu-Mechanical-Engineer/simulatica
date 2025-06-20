@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { onAuthStateChanged, User } from 'firebase/auth';
+import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 
@@ -34,27 +34,28 @@ export default function AdminDashboard() {
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user: User | null) => {
-      if (!user) {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (!firebaseUser) {
         router.push('/login');
         return;
       }
-      if (user.email !== ADMIN_EMAIL) {
+
+      if (firebaseUser.email !== ADMIN_EMAIL) {
         alert('Access denied. Not admin.');
         router.push('/');
         return;
       }
 
-      setUserEmail(user.email);
+      setUserEmail(firebaseUser.email);
 
       try {
         const [formRes, payRes] = await Promise.all([
           fetch(FORM_URL),
-          fetch(PAYMENT_URL)
+          fetch(PAYMENT_URL),
         ]);
 
-        const formData = await formRes.json();
-        const payData = await payRes.json();
+        const formData: { result: string; data: Submission[] } = await formRes.json();
+        const payData: { result: string; data: Payment[] } = await payRes.json();
 
         if (formData.result === 'Success' && payData.result === 'Success') {
           setSubmissions(formData.data.reverse());
@@ -75,13 +76,18 @@ export default function AdminDashboard() {
 
   const handleStatusChange = async (row: number, newStatus: string) => {
     try {
-      const response = await fetch(`${FORM_URL}?function=update&row=${row}&status=${encodeURIComponent(newStatus)}`);
-      const result = await response.json();
+      const response = await fetch(
+        `${FORM_URL}?function=update&row=${row}&status=${encodeURIComponent(newStatus)}`
+      );
+      const result: { result: string; message?: string } = await response.json();
+
       if (result.result === 'Success') {
-        setSubmissions(prev => prev.map(s => (s._row === row ? { ...s, status: newStatus } : s)));
+        setSubmissions((prev) =>
+          prev.map((s) => (s._row === row ? { ...s, status: newStatus } : s))
+        );
         alert('✅ Status updated in sheet.');
       } else {
-        alert('❌ Update failed: ' + result.message);
+        alert('❌ Update failed: ' + (result.message || 'Unknown error'));
       }
     } catch (error) {
       console.error('Update error:', error);
@@ -89,23 +95,33 @@ export default function AdminDashboard() {
     }
   };
 
-  const getReceiptLink = (email: string) => {
-    const match = payments.find(p => p.email?.toLowerCase() === email?.toLowerCase());
+  const getReceiptLink = (email: string): string | null => {
+    const match = payments.find(
+      (p) => p.email?.toLowerCase() === email?.toLowerCase()
+    );
     return match?.receipturl || null;
   };
 
-  const getPaymentStatus = (email: string) => {
-    return payments.some(p => p.email?.toLowerCase() === email?.toLowerCase()) ? 'Paid' : 'Unpaid';
+  const getPaymentStatus = (email: string): 'Paid' | 'Unpaid' => {
+    return payments.some(
+      (p) => p.email?.toLowerCase() === email?.toLowerCase()
+    )
+      ? 'Paid'
+      : 'Unpaid';
   };
 
-  if (loading) return <div className="p-6">Loading admin dashboard...</div>;
+  if (loading) {
+    return <div className="p-6">Loading admin dashboard...</div>;
+  }
 
   return (
     <div className="p-6 overflow-x-auto">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">🛠️ Admin Dashboard</h1>
       </div>
-      <p className="mb-4">Welcome, <strong>{userEmail}</strong></p>
+      <p className="mb-4">
+        Welcome, <strong>{userEmail}</strong>
+      </p>
 
       {submissions.length === 0 ? (
         <p>No project submissions yet.</p>
@@ -132,7 +148,11 @@ export default function AdminDashboard() {
                 <td className="p-2">{s.description}</td>
                 <td className="p-2">
                   <a
-                    href={s.fileurl?.includes('/view') ? s.fileurl.replace('/view?usp=drivesdk', '?export=download') : s.fileurl}
+                    href={
+                      s.fileurl?.includes('/view')
+                        ? s.fileurl.replace('/view?usp=drivesdk', '?export=download')
+                        : s.fileurl
+                    }
                     className="text-blue-600 underline"
                     target="_blank"
                     rel="noopener noreferrer"
@@ -144,7 +164,7 @@ export default function AdminDashboard() {
                 <td className="p-2">
                   {getReceiptLink(s.email) ? (
                     <a
-                      href={getReceiptLink(s.email) || '#'}
+                      href={getReceiptLink(s.email)!}
                       target="_blank"
                       className="text-blue-600 underline"
                       rel="noopener noreferrer"
@@ -159,7 +179,9 @@ export default function AdminDashboard() {
                   <select
                     className="border p-1 rounded"
                     value={s.status || 'Under Review'}
-                    onChange={(e) => handleStatusChange(s._row, e.target.value)}
+                    onChange={(e) =>
+                      handleStatusChange(s._row, e.target.value)
+                    }
                   >
                     <option>Pending</option>
                     <option>Under Review</option>

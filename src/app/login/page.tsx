@@ -27,8 +27,8 @@ export default function LoginPage() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        const email = user.email || '';
-        router.push(email === ADMIN_EMAIL ? '/admin' : '/user');
+        const userEmail = user.email || '';
+        router.push(userEmail === ADMIN_EMAIL ? '/admin' : '/dashboard');
       } else {
         setLoading(false);
       }
@@ -40,7 +40,7 @@ export default function LoginPage() {
   const handleGoogleLogin = async () => {
     try {
       await signInWithPopup(auth, provider);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error(err);
       setError('❌ Google login failed.');
     }
@@ -52,31 +52,36 @@ export default function LoginPage() {
       const methods = await fetchSignInMethodsForEmail(auth, email);
 
       if (methods.includes('google.com') && !methods.includes('password')) {
-        alert('⚠️ This email is registered with Google. Please log in with Google first.');
+        alert('⚠️ This email is registered with Google. Please log in with Google.');
         return;
       }
 
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
 
+      // Link password if not already linked
       if (!methods.includes('password')) {
         const credential = EmailAuthProvider.credential(email, password);
         await linkWithCredential(userCredential.user, credential);
-        console.log('✅ Email/password linked with Google account.');
+        console.log('✅ Linked password login with Google account.');
       }
 
-      router.push(email === ADMIN_EMAIL ? '/admin' : '/user');
-    } catch (err: any) {
+      router.push(email === ADMIN_EMAIL ? '/admin' : '/dashboard');
+    } catch (err: unknown) {
       console.error(err);
-      setError('❌ Invalid email or password.');
+      const message = err instanceof Error ? err.message : 'Login failed';
+      setError(`❌ ${message}`);
     }
   };
 
   const handleForgotPassword = async () => {
-    if (!email) return alert('📩 Enter your email to reset password.');
+    if (!email) {
+      alert('📩 Enter your email to reset password.');
+      return;
+    }
     try {
       await sendPasswordResetEmail(auth, email);
       alert('✅ Password reset email sent!');
-    } catch (err) {
+    } catch (err: unknown) {
       console.error(err);
       alert('❌ Failed to send reset email.');
     }

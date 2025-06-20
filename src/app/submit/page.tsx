@@ -95,9 +95,10 @@ export default function SubmitForm() {
       };
 
       reader.readAsDataURL(file);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      alert("❌ " + err.message);
+      const message = err instanceof Error ? err.message : 'Something went wrong during submission.';
+      alert("❌ " + message);
     } finally {
       setLoading(false);
     }
@@ -113,7 +114,6 @@ export default function SubmitForm() {
           Simulat
           <span className="inline-block relative text-orange-400">
             ica
-            {/* Gears */}
             <svg
               viewBox="0 0 100 100"
               className="absolute -top-6 -left-12 w-[130px] h-[130px] text-orange-500 animate-spin-slow"
