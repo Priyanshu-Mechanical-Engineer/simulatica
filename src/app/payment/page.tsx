@@ -25,38 +25,54 @@ export default function PaymentPage() {
     return () => unsubscribe();
   }, [router]);
 
-  const handleUpload = async () => {
-    if (!file || !userEmail) {
-      alert('Please select a file and make sure you are logged in.');
-      return;
-    }
+const handleUpload = async () => {
+  if (!file || !userEmail) {
+    alert('Please select a file and make sure you are logged in.');
+    return;
+  }
 
-    const formData = new FormData();
-    formData.append('function', 'paymentUpload');
-    formData.append('email', userEmail);
-    formData.append('file', file);
+  const reader = new FileReader();
+
+  reader.onload = async () => {
+    const base64Data = (reader.result as string).split(',')[1];
+
+    const formPayload = new URLSearchParams({
+      function: 'receipt',
+      email: userEmail,
+      filename: file.name,
+      mimeType: file.type,
+      file: base64Data
+    });
 
     try {
       setUploading(true);
+
       const res = await fetch(SCRIPT_URL, {
         method: 'POST',
-        body: formData
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: formPayload.toString()
       });
 
       const result = await res.json();
       if (result.result === 'Success') {
-        alert('✅ Payment receipt uploaded successfully!');
+        alert('✅ Payment receipt uploaded!');
         setFile(null);
       } else {
         alert('❌ Upload failed: ' + result.message);
       }
-    } catch (err) {
-      console.error('Upload error:', err);
+    } catch (error) {
+      console.error('Upload error:', error);
       alert('❌ Error uploading file.');
     } finally {
       setUploading(false);
     }
   };
+
+  reader.readAsDataURL(file);
+};
+
 
   return (
     <div className="p-6 max-w-lg mx-auto">

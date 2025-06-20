@@ -6,17 +6,16 @@ import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import LogoutButton from '../../components/LogoutButton';
 
-
 const SHEET_URL =
   'https://script.google.com/macros/s/AKfycbx4tZX7moFmH_zVDVFm3xxaZUIZA2KzeEuvuabbSmmIdwvVRnu4mzS_smjV-4SD1uly6Q/exec';
 
 interface Submission {
-  Timestamp: string;
+  timestamp: string;
   name: string;
   email: string;
-  projectType: string;
+  projecttype: string;
   description: string;
-  fileUrl: string;
+  fileurl: string;
   status?: string;
   _row: number;
 }
@@ -34,27 +33,24 @@ export default function UserDashboard() {
         return;
       }
 
-      const email = user.email || '';
+      const email = user.email ?? '';
       setUserEmail(email);
 
       try {
         const res = await fetch(SHEET_URL);
-        const result = await res.json();
+        const result: { result: string; data: Submission[] } = await res.json();
 
         if (result.result === 'Success') {
           const userSubs = result.data
             .reverse()
-            .filter(
-              (entry: Submission) =>
-                entry.email?.toLowerCase() === email.toLowerCase()
-            );
+            .filter((entry) => entry.email?.toLowerCase() === email.toLowerCase());
 
           setSubmissions(userSubs);
         } else {
           alert('❌ Failed to fetch your projects');
         }
-      } catch (err) {
-        console.error('Failed to load:', err);
+      } catch (error) {
+        console.error('Failed to load submissions:', (error as Error).message);
       } finally {
         setLoading(false);
       }
@@ -69,7 +65,7 @@ export default function UserDashboard() {
     <div className="p-6 overflow-x-auto">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">📋 My Submissions</h1>
-        <LogoutButton />
+        {/* <LogoutButton /> */}
       </div>
 
       <p className="mb-4">
@@ -91,18 +87,15 @@ export default function UserDashboard() {
           <tbody>
             {submissions.map((s, i) => (
               <tr key={i} className="border-t">
-                <td className="p-2">{s.projectType}</td>
+                <td className="p-2">{s.projecttype}</td>
                 <td className="p-2">{s.description}</td>
                 <td className="p-2">
-                  {s.fileUrl ? (
+                  {s.fileurl ? (
                     <a
                       href={
-                        s.fileUrl.includes('/view')
-                          ? s.fileUrl.replace(
-                              '/view?usp=drivesdk',
-                              '?export=download'
-                            )
-                          : s.fileUrl
+                        s.fileurl.includes('/view')
+                          ? s.fileurl.replace('/view?usp=drivesdk', '?export=download')
+                          : s.fileurl
                       }
                       className="text-blue-600 underline"
                       target="_blank"
