@@ -1,54 +1,77 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import { useRouter } from 'next/navigation';
-
-const ADMIN_EMAIL = '2022meb1331@iitrpr.ac.in';
 
 export default function Navbar() {
-  const [userEmail, setUserEmail] = useState('');
-  const [isAdmin, setIsAdmin] = useState(false);
-  const router = useRouter();
+  const pathname = usePathname();
+  const [email, setEmail] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user?.email) {
-        setUserEmail(user.email);
-        setIsAdmin(user.email === ADMIN_EMAIL);
-      } else {
-        setUserEmail('');
-        setIsAdmin(false);
-      }
+      setEmail(user?.email ?? null);
+      setLoading(false);
     });
-
     return () => unsubscribe();
   }, []);
 
-  const handleLogout = async () => {
-    await signOut(auth);
-    router.push('/login');
-  };
+  const isAdmin = email === '2022meb1331@iitrpr.ac.in';
 
   return (
-    <nav className="bg-gray-900 text-white p-4 flex justify-between items-center">
-      <div className="text-xl font-bold text-blue-400">
-        <Link href="/">Simulatica</Link>
-      </div>
-      <div className="flex gap-4 items-center">
-        <Link href="/submit">Submit</Link>
-        {/* <Link href="/payment">Payment</Link> */}
-        <Link href={isAdmin ? "/admin/dashboard" : "/dashboard"}>Dashboard</Link>
-        {/* ✅ Show Receipts to both, with different routes */}
-        <Link href={isAdmin ? "/admin/receipts" : "/receipts"}>Receipts</Link>
-        {userEmail && (
-          <button onClick={handleLogout} className="text-red-400 hover:underline">
-            Logout
-          </button>
+    <header className="relative z-10 flex justify-between items-center px-8 py-4 bg-gray-900/70 backdrop-blur-md shadow-md">
+      <Link href="/" className="text-2xl font-bold tracking-widest text-blue-400">
+        Simulatica
+      </Link>
+      <nav className="flex gap-6 text-sm md:text-base items-center">
+        <Link href="/submit" className={navClass(pathname === '/submit')}>
+          Submit
+        </Link>
+        <Link href="/payment" className={navClass(pathname === '/payment')}>
+          Payment
+        </Link>
+        {!loading && email && (
+          <Link href="/dashboard" className={navClass(pathname === '/dashboard')}>
+            Dashboard
+          </Link>
         )}
-      </div>
-    </nav>
+        {!loading && isAdmin && (
+          <>
+            <Link href="/admin/dashboard" className={navClass(pathname === '/admin/dashboard')}>
+              Admin
+            </Link>
+            <Link href="/admin/receipts" className={navClass(pathname === '/admin/receipts')}>
+              Receipts
+            </Link>
+          </>
+        )}
+        {!loading && !email ? (
+          <Link
+            href="/login"
+            className="bg-blue-600 px-4 py-2 rounded text-white shadow hover:bg-blue-700"
+          >
+            Login
+          </Link>
+        ) : (
+          !loading && (
+            <button
+              onClick={() => signOut(auth)}
+              className="text-red-400 hover:text-red-500 font-semibold"
+            >
+              Logout
+            </button>
+          )
+        )}
+      </nav>
+    </header>
   );
+}
+
+function navClass(active: boolean) {
+  return active
+    ? 'text-blue-300 font-semibold underline'
+    : 'text-white hover:text-blue-300';
 }
